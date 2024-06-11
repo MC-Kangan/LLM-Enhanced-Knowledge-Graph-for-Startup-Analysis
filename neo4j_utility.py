@@ -1,5 +1,5 @@
 import json
-from edgar import Company
+
 
 def escape_quotes_for_cypher(value):
     """Escape single quotes in a string for use in Cypher queries."""
@@ -44,6 +44,3 @@ def dict_to_cypher_create_node(data, node_label):
     return create_statement
 
 
-def get_company_info_from_cik(cik):
-    company = Company(cik)
-    return company.to_dict(), company
