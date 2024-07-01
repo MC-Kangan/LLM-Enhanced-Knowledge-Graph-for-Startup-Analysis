@@ -5,6 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage 
 from dotenv import load_dotenv
 from datetime import datetime
+from os.path import exists
 from firecrawl_scraping import *
 from utility import *
 import re
@@ -64,7 +65,7 @@ def info_extraction(text, model_name = "gpt-4o"):
         ## 1. Product offering:
             - What service or product does the company provide?
             - What features does the product or service have?
-            
+            Note: If the company has more than 1 product or service, try to summarise information and return three main products only.
 
         ## 2. Client or partnership:
             - Who are the partners or clients of the company?
@@ -75,9 +76,9 @@ def info_extraction(text, model_name = "gpt-4o"):
         Output in JSON format:
         {{
             "product_offering": {{
-                "product_1": "concise features description of the product or service",
-                "product_2": "concise features description of the product or service",
-                ...
+                "summarised_name_of_product_1": "concise features description of the product or service",
+                "summarised_name_of_product_2": "concise features description of the product or service",
+                "summarised_name_of_product_3": "concise features description of the product or service",
             }}
             "partners": {{
                 "partner_name_1": "description of the usecase",
@@ -118,14 +119,20 @@ def LLM_extraction_agent(filename, url):
     try:
         # Generate timestamp
         timestamp = datetime.now().strftime('%Y%m%d')
+        file_exists = exists(f'scraping_output/{filename}_{timestamp}.md')
         
         # Scrape data
-        print('1. Scrape url with Firecrawl')
-        raw_data = scrape_data(url)
+        print('1. Scrape URL with Firecrawl')
         
-        print('2: Save scraped contents as a MD file')
-        # Save raw data
-        save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output')
+        if file_exists:
+            print('This URL has been scraped today')
+            print('2: Read the scraped contents as a MD file')
+        else:
+            raw_data = scrape_data(url)
+        
+            print('2: Save scraped contents as a MD file')
+            # Save raw data
+            save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output')
         
         raw_data = read_markdown_file(f'scraping_output/{filename}_{timestamp}.md')
         
