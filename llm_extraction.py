@@ -76,13 +76,13 @@ def info_extraction(text, model_name = "gpt-4o"):
         Output in JSON format:
         {{
             "product_offering": {{
-                "summarised_name_of_product_1": "concise features description of the product or service",
-                "summarised_name_of_product_2": "concise features description of the product or service",
-                "summarised_name_of_product_3": "concise features description of the product or service",
+                "summarised name of product 1": "concise features description of the product or service",
+                "summarised name of product 2": "concise features description of the product or service",
+                "summarised name of product 3": "concise features description of the product or service",
             }}
             "partners": {{
-                "partner_name_1": "description of the usecase",
-                "partner_name_2": "description of the usecase",
+                "partner name 1": "description of the usecase",
+                "partner name 2": "description of the usecase",
                 ...
             }}
             "logos": "logo of client 1, such as https://www.company/client1_Logo.png", "logo of client 1, such as https://www.company/client2_Logo.png", ...
@@ -115,45 +115,75 @@ def info_extraction(text, model_name = "gpt-4o"):
     
     return response
 
-def LLM_extraction_agent(filename, url):
-    try:
-        # Generate timestamp
-        timestamp = datetime.now().strftime('%Y%m%d')
-        file_exists = exists(f'scraping_output/{filename}_{timestamp}.md')
-        
-        # Scrape data
-        print('1. Scrape URL with Firecrawl')
-        
-        if file_exists:
-            print('This URL has been scraped today')
-            print('2: Read the scraped contents as a MD file')
-        else:
-            raw_data = scrape_data(url)
-        
-            print('2: Save scraped contents as a MD file')
-            # Save raw data
-            save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output')
-        
-        raw_data = read_markdown_file(f'scraping_output/{filename}_{timestamp}.md')
-        
-        print('3: Clean scraped contents')
-        # Clean the markdown file before further processing
-        clean_data = clean_scraped_content(raw_data)
-        
-        print('4: Extract information using LLM')
-        response = info_extraction(clean_data)
-        
-        print('4: Save extracted information as a JSON file')
-        # Save the response dictionary to a JSON file
-        output_file = f"extraction_output/{filename}.json"
-        with open(output_file, 'w') as f:
-            json.dump(response, f, indent=4)
+def is_markdown_file_empty(file_path):
+    # Check if file exists
+    if not os.path.exists(file_path):
+        return True
 
-        print(f"Output saved to {output_file}")
-        return response
+    # Read the file content
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read().strip()
+
+    # Check if content is empty
+    return len(content) == 0
+
+def create_empty_json_file(output_path):
+    empty_data = {}
+    with open(output_path, 'w', encoding='utf-8') as json_file:
+        json.dump(empty_data, json_file, indent=4)
+    print(f"Empty JSON file created at {output_path}")
+    
+
+def LLM_extraction_agent(filename, url):
+    
+    if is_webpage_accessible(url):
+        try:
+            # Generate timestamp
+            timestamp = datetime.now().strftime('%Y%m%d')
+            file_exists = exists(f'scraping_output/{filename}_{timestamp}.md')
+            
+            # Scrape data
+            print('1. Scrape URL with Firecrawl')
+            
+            if file_exists:
+                print('This URL has been scraped today')
+                print('2: Read the scraped contents as a MD file')
+            else:
+                raw_data = scrape_data(url)
+            
+                print('2: Save scraped contents as a MD file')
+                # Save raw data
+                save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output')
+            
+            raw_data = read_markdown_file(f'scraping_output/{filename}_{timestamp}.md')
+            
+            print('3: Clean scraped contents')
+            # Clean the markdown file before further processing
+            clean_data = clean_scraped_content(raw_data)
+            
+            print('4: Extract information using LLM')
+            
+            if len(clean_data) != 0:
+                response = info_extraction(clean_data)
+                
+                print('5: Save extracted information as a JSON file')
+                # Save the response dictionary to a JSON file
+                output_file = f"extraction_output/{filename}.json"
+                with open(output_file, 'w') as f:
+                    json.dump(response, f, indent=4)
+
+                print(f"Output saved to {output_file}")
+                return response
+            
+            else:
+                print('The MD file is empty')
+                print('5: Save as an empty JSON file')
+                create_empty_json_file(f"extraction_output/{filename}.json")
+            
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    
+    else:
+        print(f'The URL: {url} is not accessible')
         
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    
-    
     
