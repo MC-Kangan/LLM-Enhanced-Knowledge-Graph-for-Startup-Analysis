@@ -12,5 +12,5 @@ def read_json_file(file_path):
     
 def process_company_name(name):
     name = name.lower()
-    return name.replace(' ', '_').replace('/', '_').replace(';', '_').replace('-', '_').replace(',', '').replace('.', '_')
+    return name.replace(' ', '_').replace('/', '_').replace(';', '_').replace('-', '_').replace(',', '').replace('.', '_').replace("(", '').replace(')', '')
     
