@@ -134,7 +134,8 @@ def create_empty_json_file(output_path):
     print(f"Empty JSON file created at {output_path}")
     
 
-def LLM_extraction_agent(filename, url):
+def LLM_extraction_agent(company_name, url):
+    filename = process_company_name(company_name)
     
     if is_webpage_accessible(url):
         try:
@@ -171,6 +172,14 @@ def LLM_extraction_agent(filename, url):
                 output_file = f"extraction_output/{filename}.json"
                 with open(output_file, 'w') as f:
                     json.dump(response, f, indent=4)
+                    
+                metadata_fields = {
+                    "company_name": company_name,
+                    "url": url
+                }
+    
+                updated_data = update_json_data(response, metadata_fields)
+                write_json_file(output_file, updated_data)
 
                 print(f"Output saved to {output_file}")
                 return response
