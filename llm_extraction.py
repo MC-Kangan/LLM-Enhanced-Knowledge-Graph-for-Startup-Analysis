@@ -21,11 +21,12 @@ def remove_irregular_content(markdown_content):
         # r"\\{2,}",  # Matches multiple backslashes
         # r"\\n",  # Matches escaped newlines
         # r"\*{2,}",  # Matches multiple asterisks
+        r'^[\s\W]*$' # lines with only signs
     ]
 
     # Remove patterns from the content
     for pattern in patterns:
-        markdown_content = re.sub(pattern, '', markdown_content)
+        markdown_content = re.sub(pattern, '', markdown_content, flags=re.MULTILINE)
 
     # Remove lines that contain "vwo" and its variants
     markdown_content = "\n".join([line for line in markdown_content.splitlines() if not re.search(r'vwo', line, re.IGNORECASE)])
