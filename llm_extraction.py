@@ -108,13 +108,14 @@ def info_extraction(text, model_name = "gpt-4o"):
 
     llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_KEY'),
                     temperature = 0, 
-                    model_name = "gpt-4o")
+                    model_name = model_name)
 
     llm_chain = prompt | llm | SimpleJsonOutputParser()
 
     response = llm_chain.invoke({'input': text})
     
     return response
+
 
 def is_markdown_file_empty(file_path):
     # Check if file exists
