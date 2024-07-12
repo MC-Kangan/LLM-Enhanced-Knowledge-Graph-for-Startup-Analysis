@@ -11,7 +11,7 @@ from utility import *
 import re
 import os
 
-def remove_irregular_content(markdown_content):
+def remove_irregular_js_content(markdown_content):
     # Regex patterns to identify unwanted content
     patterns = [
         # r"(?s){.*?}",  # Matches JSON-like structures
@@ -21,7 +21,7 @@ def remove_irregular_content(markdown_content):
         # r"\\{2,}",  # Matches multiple backslashes
         # r"\\n",  # Matches escaped newlines
         # r"\*{2,}",  # Matches multiple asterisks
-        r'^[\s\W]*$' # lines with only signs
+        # r'^[\s\W]*$' # lines with only signs
     ]
 
     # Remove patterns from the content
@@ -33,19 +33,56 @@ def remove_irregular_content(markdown_content):
 
     return markdown_content
 
-def remove_empty_lines_only(markdown_content):
+def remove_lines_with_only_signs(markdown_content):
+    # Regex patterns to identify unwanted content
+    patterns = [
+        r'^[\s\W]*$' # lines with only signs
+    ]
+
+    # Remove patterns from the content
+    for pattern in patterns:
+        markdown_content = re.sub(pattern, '', markdown_content, flags=re.MULTILINE)
+
+    return markdown_content
+
+def remove_links_and_images(markdown_text):
+    # Regex to match content inside parentheses following an image or link markdown pattern, including the parentheses
+    pattern = r'(\[.*?\])\(.*?\)'
+    
+    # Replace the entire match with only the content inside the square brackets
+    cleaned_text = re.sub(pattern, r'\1', markdown_text)
+    
+    return cleaned_text
+
+def remove_duplicate_lines(text):
+    seen_lines = set()
+    unique_lines = []
+    for line in text.splitlines():
+        if line not in seen_lines:
+            unique_lines.append(line)
+            seen_lines.add(line)
+    return "\n".join(unique_lines)
+
+def remove_empty_lines(markdown_content):
     # Remove empty lines but keep lines with spaces
     markdown_content = "\n".join([line for line in markdown_content.splitlines() if line.strip() != ""])
     return markdown_content
 
 def clean_scraped_content(markdown_content):
-    # Remove irregular content
-    cleaned_content = remove_irregular_content(markdown_content)
-
+    # Remove irregular JS content
+    cleaned_content = remove_irregular_js_content(markdown_content)
+    
+    # Remove links and images
+    cleaned_content = remove_links_and_images(cleaned_content)
+    
+    # Remove duplicated lines
+    cleaned_content = remove_duplicate_lines(cleaned_content)
+    
+    # Remove lines with only signs
+    cleaned_content = remove_lines_with_only_signs(cleaned_content)
+    
     # Remove empty lines only
-    cleaned_content = remove_empty_lines_only(cleaned_content)
-
-    # Additional heuristics can be added here if needed
+    cleaned_content = remove_empty_lines(cleaned_content)
 
     return cleaned_content
 
