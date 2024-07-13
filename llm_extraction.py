@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 from datetime import datetime
 from os.path import exists
+import tiktoken
 from firecrawl_scraping import *
 from utility import *
 import re
@@ -85,6 +86,21 @@ def clean_scraped_content(markdown_content):
     cleaned_content = remove_empty_lines(cleaned_content)
 
     return cleaned_content
+
+
+def count_tokens(input_string: str) -> int:
+    tokenizer = tiktoken.encoding_for_model("gpt-4o")
+
+    tokens = tokenizer.encode(input_string)
+
+    return len(tokens)
+
+def calculate_cost(input_string: str, cost_per_million_tokens: float = 5) -> float:
+    num_tokens = count_tokens(input_string)
+
+    total_cost = (num_tokens / 1_000_000) * cost_per_million_tokens
+
+    return total_cost
 
 
 def info_extraction(text, model_name = "gpt-4o"):

@@ -4,7 +4,9 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-
+import time
+from firecrawl_scraping import FirecrawlApp
+from requests.exceptions import HTTPError
 
 
 def is_webpage_accessible(url):
@@ -45,22 +47,47 @@ def scrape_data(url):
     else:
         raise KeyError("The key 'markdown' does not exist in the scraped data.")
     
-    
-def crawl_data(url_list: list):
+
+def crawl_data(base_url, url_list: list):
     load_dotenv()
     # Initialize the FirecrawlApp with your API key
     app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_KEY'))
     
-    result = ''
+    result = {}
+    rate_limit_reset_time = 0
     
     for url in url_list:
-        # Scrape a single URL
-        scraped_data = app.scrape_url(url,{'pageOptions':{'onlyMainContent': True}})
+        # Respect rate limit by waiting until the reset time
+        if time.time() < rate_limit_reset_time:
+            wait_time = rate_limit_reset_time - time.time()
+            print(f"Rate limit exceeded. Waiting for {wait_time} seconds.")
+            time.sleep(wait_time)
         
-        # Check if 'markdown' key exists in the scraped data
-        if 'markdown' in scraped_data:
-            result+= '\n' + scraped_data['markdown']
+        try:
+            # Scrape a single URL
+            scraped_data = app.scrape_url(url, {'pageOptions': {'onlyMainContent': True}})
             
+            # Check if 'markdown' key exists in the scraped data
+            if 'markdown' in scraped_data:
+                if base_url == url:
+                    result['main_page'] = scraped_data['markdown']
+                else:
+                    if base_url in url:
+                        endpoint = url.replace(base_url, '')
+                    else:
+                        endpoint = url
+                    result[endpoint] = scraped_data['markdown']
+        
+        except HTTPError as e:
+            # Handle rate limit exceeded error
+            if e.response.status_code == 429:
+                rate_limit_reset_time = int(e.response.headers.get('Retry-After', 60)) + time.time()
+                print(f"Rate limit exceeded. Retrying after {rate_limit_reset_time - time.time()} seconds.")
+                time.sleep(rate_limit_reset_time - time.time())
+                continue
+            else:
+                print(f"Unexpected error: {e}")
+    
     return result
 
     
