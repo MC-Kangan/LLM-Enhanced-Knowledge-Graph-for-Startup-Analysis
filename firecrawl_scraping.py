@@ -128,9 +128,9 @@ def extract_urls(html, base_url):
     return urls
 
 def filter_urls(urls):
-    keywords_wanted = ['platform', 'product', 'service', 'solution', 'client', 'partner', 'customer']
+    keywords_wanted = ['platform', 'product', 'service', 'solution', 'client', 'partner', 'customer', 'case']
     filtered_urls = [url for url in urls if any(keyword in url.lower() for keyword in keywords_wanted)]
-    keywords_unwanted = ['login', 'news', 'support', 'blog', 'term']
+    keywords_unwanted = ['login', 'news', 'support', 'blog', 'term', 'faq']
     filtered_urls = [url for url in filtered_urls if not any(keyword in url.lower() for keyword in keywords_unwanted)]
     return filtered_urls
 
