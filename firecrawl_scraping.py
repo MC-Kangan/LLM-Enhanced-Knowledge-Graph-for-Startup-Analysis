@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from firecrawl import FirecrawlApp
+import json
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -48,15 +49,36 @@ def scrape_data(url):
         raise KeyError("The key 'markdown' does not exist in the scraped data.")
     
 
-def crawl_data(base_url, url_list: list):
+
+def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False):
     load_dotenv()
     # Initialize the FirecrawlApp with your API key
     app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_KEY'))
     
-    result = {}
+    # Load existing data if the file exists
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            result = json.load(file)
+    else:
+        result = {}
+
     rate_limit_reset_time = 0
     
     for url in url_list:
+        # Determine the endpoint
+        if base_url == url:
+            endpoint = 'main_page'
+        else:
+            if base_url in url:
+                endpoint = url.replace(base_url, '')
+            else:
+                endpoint = url
+        
+        # Check if the endpoint already exists in the result
+        if endpoint in result and not overwrite:
+            print(f"Skipping {url} as it already exists and overwrite is set to False.")
+            continue  # Skip this URL and move to the next one
+
         # Respect rate limit by waiting until the reset time
         if time.time() < rate_limit_reset_time:
             wait_time = rate_limit_reset_time - time.time()
@@ -65,18 +87,12 @@ def crawl_data(base_url, url_list: list):
         
         try:
             # Scrape a single URL
+            print(f"Scraping {url}.")
             scraped_data = app.scrape_url(url, {'pageOptions': {'onlyMainContent': True}})
             
             # Check if 'markdown' key exists in the scraped data
             if 'markdown' in scraped_data:
-                if base_url == url:
-                    result['main_page'] = scraped_data['markdown']
-                else:
-                    if base_url in url:
-                        endpoint = url.replace(base_url, '')
-                    else:
-                        endpoint = url
-                    result[endpoint] = scraped_data['markdown']
+                result[endpoint] = scraped_data['markdown']
         
         except HTTPError as e:
             # Handle rate limit exceeded error
@@ -84,11 +100,18 @@ def crawl_data(base_url, url_list: list):
                 rate_limit_reset_time = int(e.response.headers.get('Retry-After', 60)) + time.time()
                 print(f"Rate limit exceeded. Retrying after {rate_limit_reset_time - time.time()} seconds.")
                 time.sleep(rate_limit_reset_time - time.time())
-                continue
+                continue  # Skip the rest of the code in this iteration and retry scraping the same URL
             else:
                 print(f"Unexpected error: {e}")
     
+    # Write the updated JSON data back to the file
+    with open(file_path, 'w') as file:
+        json.dump(result, file, indent=4)
+    
     return result
+
+
+
 
     
 def save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output'):
@@ -101,6 +124,7 @@ def save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output'
     with open(raw_output_path, 'w', encoding='utf-8') as f:
         f.write(raw_data)
     print(f"Raw data saved to {raw_output_path}")
+    
     
 def fetch_webpage(url):
     
@@ -130,7 +154,7 @@ def extract_urls(html, base_url):
 def filter_urls(urls):
     keywords_wanted = ['platform', 'product', 'service', 'solution', 'client', 'partner', 'customer', 'case']
     filtered_urls = [url for url in urls if any(keyword in url.lower() for keyword in keywords_wanted)]
-    keywords_unwanted = ['login', 'news', 'support', 'blog', 'term', 'faq']
+    keywords_unwanted = ['login', 'news', 'support', 'blog', 'term', 'faq', 'demo']
     filtered_urls = [url for url in filtered_urls if not any(keyword in url.lower() for keyword in keywords_unwanted)]
     return filtered_urls
 

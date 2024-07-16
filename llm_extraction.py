@@ -169,6 +169,64 @@ def info_extraction(text, model_name = "gpt-4o"):
     
     return response
 
+def llm_extraction_json(text, model_name="gpt-4o"):
+    system_message = """
+    You are an intelligent text extraction and conversion assistant. Your task is to extract information 
+    from the given text and convert it into a pure JSON format. 
+    The JSON should contain only the structured data extracted from the text, with no additional commentary, explanations, or extraneous information.
+    If the required information could not be found from the given source, return nothing for that field. Do not hallucinate.
+    """
+
+    extraction_prompt = """
+    You are provided a text obtained from a webpage of a company. 
+    Extract any sections or paragraphs that are relevant to the information of interest from the text.
+    
+    ## Here are the information of interest:
+    
+    1. About Product or Service: 
+    - Any information about the service or product that the company offer and their features
+
+    2. About Partner or Client:
+    - Any information about the partners or clients of the company. 
+    - Any use cases (case studies) about how a client is using the product or service.
+    
+    ## Note: 
+    - For this task, you do not need to summarise. You just need to extract raw lines from the text. 
+    - If you are unsure about whether the information is relevant, just include this information as I want as much information as possible.
+
+    ## Output in JSON format:
+    {{
+        "about_product": "any information about the product or service",
+        "about_client": "any information about the client or partnership"
+    }}
+    
+    """
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_message),
+            ("system", extraction_prompt),
+            ("human", "Use the given text to extract information: {input}"),
+            ("human", """
+                Here are the rules that you need to adhere:
+                ## Rules:
+                - Make sure to answer in the correct JSON format.
+                - If no information is provided for any of the fields, return nothing of that field.
+                - DO NOT HALLUCINATE.
+             """),
+        ]
+    )
+    
+    llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_KEY'),
+                    temperature=0, 
+                    model_name=model_name)
+
+    llm_chain = prompt | llm | SimpleJsonOutputParser()
+
+    response = llm_chain.invoke({'input': text})
+    
+    return response
+
 
 def is_markdown_file_empty(file_path):
     # Check if file exists
