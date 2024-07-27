@@ -11,6 +11,8 @@ from requests.exceptions import HTTPError
 from collections import Counter
 import time
 from datetime import datetime
+import random
+from utility import *
 
 
 def is_webpage_accessible(url):
@@ -266,6 +268,78 @@ def get_and_verify_client_link(company_name, verbose = True):
     except Exception as e:
         print(f'Company {company_name} has error: {e}')
         return None
+    
+def get_client(extraction_file_path):
+    data = read_json_file(extraction_file_path)
+    client_list = []
+    if data['validated_client_descriptions']:
+        for client in data['validated_client_descriptions']:
+            if client['entity_type'] == 'company':
+                client_list.append(client['name'])
+    
+    return client_list
+
+
+
+def extract_base_url(url):
+    """
+    Extract the base URL from a given URL.
+    """
+    parsed_url = urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    return base_url
+
+def calculate_url_depth(url):
+    """
+    Calculate the depth of a URL by counting the number of segments in the path.
+    """
+    path = urlparse(url).path
+    return len(path.strip('/').split('/'))
+
+
+def select_urls(urls, limit = 5, include_all = False):
+    """
+    Select up to 'limit' URLs based on their depth, preferring URLs with lower depth.
+    If there are more URLs with the same depth than needed, select randomly from them.
+    Ensure the base URL is included in the final list.
+    """
+    
+    if not include_all:
+
+        # Extract the base URL from the first URL in the list
+        base_url = extract_base_url(urls[0])
+        
+        # Create a list of other URLs excluding the base URL
+        other_urls = [url for url in urls if url.replace('/', '') != base_url.replace('/', '')]
+
+        # Calculate depth for each URL and store in a list of tuples (url, depth)
+        url_depths = [(url, calculate_url_depth(url)) for url in other_urls]
+        
+        # Group URLs by depth
+        depth_dict = {}
+        for url, depth in url_depths:
+            if depth not in depth_dict:
+                depth_dict[depth] = []
+            depth_dict[depth].append(url)
+
+
+        # Shuffle each list of URLs with the same depth
+        for depth in depth_dict:
+            random.shuffle(depth_dict[depth])
+
+        # Concatenate lists of URLs by increasing depth
+        sorted_depths = sorted(depth_dict.keys())
+        combined_urls = []
+        for depth in sorted_depths:
+            combined_urls.extend(depth_dict[depth])
+
+        # Include the base URL and select up to 'limit' URLs
+        selected_urls = [base_url] + combined_urls[:limit - 1]
+
+        return selected_urls
+    
+    return urls
+
 
         
     
