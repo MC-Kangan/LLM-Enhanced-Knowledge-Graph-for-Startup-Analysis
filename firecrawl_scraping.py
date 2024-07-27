@@ -111,8 +111,6 @@ def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False
     return result
 
 
-
-
     
 def save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output'):
     # Ensure the output folder exists
