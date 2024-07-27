@@ -4,10 +4,13 @@ import json
 import os
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 import time
 from firecrawl_scraping import FirecrawlApp
 from requests.exceptions import HTTPError
+from collections import Counter
+import time
+from datetime import datetime
 
 
 def is_webpage_accessible(url):
@@ -61,6 +64,10 @@ def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False
             result = json.load(file)
     else:
         result = {}
+        
+    processed_name = file_path.split('/')[1].replace('.json', '')
+    result['processed_company'] = processed_name
+    result['url'] = base_url
 
     rate_limit_reset_time = 0
     
@@ -88,6 +95,10 @@ def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False
         try:
             # Scrape a single URL
             print(f"Scraping {url}.")
+            
+            current_dateTime = datetime.now(pytz.timezone('Etc/GMT'))
+            result['timestamp'] = current_dateTime.strftime(format = "%Y-%m-%d %H:%M") + ' Etc/GMT'
+
             scraped_data = app.scrape_url(url, {'pageOptions': {'onlyMainContent': True}})
             
             # Check if 'markdown' key exists in the scraped data
@@ -103,13 +114,13 @@ def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False
                 continue  # Skip the rest of the code in this iteration and retry scraping the same URL
             else:
                 print(f"Unexpected error: {e}")
-    
+
+
     # Write the updated JSON data back to the file
     with open(file_path, 'w') as file:
         json.dump(result, file, indent=4)
     
     return result
-
 
     
 def save_raw_data(raw_data, filename, timestamp, output_folder='scraping_output'):
@@ -165,6 +176,95 @@ def get_related_urls(base_url):
         return all_urls, [base_url] + related_urls
     else:
         return None, None
+    
+
+def standardize_url(url):
+    parsed_url = urlparse(url)
+    if parsed_url.scheme == "https" and not parsed_url.netloc.startswith("www."):
+        netloc = "www." + parsed_url.netloc
+        standardized_url = urlunparse((parsed_url.scheme, netloc, parsed_url.path, parsed_url.params, parsed_url.query, parsed_url.fragment))
+        return standardized_url
+    return url
+
+def extract_base_url(url):
+    parsed_url = urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    return base_url
+
+def evaluate_confidence(urls):
+    base_urls = [extract_base_url(url) for url in urls]
+    url_counts = Counter(base_urls)
+    most_common_url, count = url_counts.most_common(1)[0]
+    
+    if count > len(urls) / 2:
+        return most_common_url
+    else:
+        return None
+
+# Function to get the company's domain using Clearbit Autocomplete API
+def clearbit_get_domain(company_name):
+    base_url_clearbit = "https://autocomplete.clearbit.com/v1/companies/suggest?"
+    params = {
+        'query': company_name
+    }
+    
+    response = requests.get(base_url_clearbit, params=params)
+    
+    if response.status_code == 200:
+        suggest_response_text = response.json()
+        if suggest_response_text:
+            domain = suggest_response_text[0].get('domain')
+            return f'https://www.{domain}'
+    return None
+
+# Function to search for a company's website
+def search_company_website(company_name):
+    search_query = f'Company "{company_name}"'
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "q": search_query,
+        "key": os.getenv("GOOGLE_SEARCH_KEY"),
+        "cx": os.getenv("SEARCH_ENGINE_ID"),
+        "num": 5  # Retrieve up to 5 results
+    }
+    
+    response = requests.get(url, params=params)
+    result = response.json()
+    if 'items' in result:
+        links = [result['items'][i]['link'] for i in range(5)]
+    
+    return links, result
+
+def get_and_verify_client_link(company_name):
+    
+    try:
+        clearbit_link = clearbit_get_domain(company_name)
+        google_links, _ = search_company_website(company_name)
+        google_links = [standardize_url(link) for link in google_links]
+        google_links_clean = [link.replace('/', '') for link in google_links]
+        if clearbit_link and clearbit_link.replace('/', '') in google_links_clean:
+            print(f"Company {company_name}: The primary URL is: {clearbit_link}")
+            return clearbit_link
+        else:
+            print(f'Company {company_name}: The URL cannot be verified.\n- clearbit output: {clearbit_link}\n- Google output: {google_links}')
+            
+            if len(google_links) == 5:
+                print(f'Company {company_name}: Try evaluate the confidance of Google result.')
+            
+                result = evaluate_confidence(google_links)
+                if result:
+                    print(f"Company {company_name}: The Google search is confident. The primary URL is: {result}")
+                else:
+                    print(f"Company {company_name}: The Google search is not confident in the primary URL.")        
+                    return None
+            else:
+                return None
+            
+    except Exception as e:
+        print(f'Company {company_name}: Error has occured when getting urls: {e}')
+        return None
+
+    
     
 if __name__ == "__main__":
     filename = 'New Construct'
