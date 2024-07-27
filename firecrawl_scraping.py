@@ -167,6 +167,7 @@ def filter_urls(urls):
     filtered_urls = [url for url in filtered_urls if not any(keyword in url.lower() for keyword in keywords_unwanted)]
     return filtered_urls
 
+
 def get_related_urls(base_url):
     if is_webpage_accessible(base_url):
         html = fetch_webpage(base_url)
@@ -177,7 +178,6 @@ def get_related_urls(base_url):
     else:
         return None, None
     
-
 def standardize_url(url):
     parsed_url = urlparse(url)
     if parsed_url.scheme == "https" and not parsed_url.netloc.startswith("www."):
@@ -225,7 +225,7 @@ def search_company_website(company_name):
         "q": search_query,
         "key": os.getenv("GOOGLE_SEARCH_KEY"),
         "cx": os.getenv("SEARCH_ENGINE_ID"),
-        "num": 5  # Retrieve up to 5 results
+        "num": 5  # Retrieve up to 10 results
     }
     
     response = requests.get(url, params=params)
@@ -235,36 +235,39 @@ def search_company_website(company_name):
     
     return links, result
 
-def get_and_verify_client_link(company_name):
-    
+def get_and_verify_client_link(company_name, verbose = True):
     try:
         clearbit_link = clearbit_get_domain(company_name)
         google_links, _ = search_company_website(company_name)
         google_links = [standardize_url(link) for link in google_links]
         google_links_clean = [link.replace('/', '') for link in google_links]
         if clearbit_link and clearbit_link.replace('/', '') in google_links_clean:
-            print(f"Company {company_name}: The primary URL is: {clearbit_link}")
+            if verbose:
+                print(f"Company {company_name}: The primary URL is: {clearbit_link}")
             return clearbit_link
         else:
-            print(f'Company {company_name}: The URL cannot be verified.\n- clearbit output: {clearbit_link}\n- Google output: {google_links}')
+            if verbose:
+                print(f'Company {company_name}: The URL cannot be verified.\n- clearbit output: {clearbit_link}\n- Google output: {google_links}')
             
             if len(google_links) == 5:
-                print(f'Company {company_name}: Try evaluate the confidance of Google result.')
+                if verbose:
+                    print(f'Company {company_name}: Try evaluate the confidance of Google result')
             
                 result = evaluate_confidence(google_links)
                 if result:
-                    print(f"Company {company_name}: The Google search is confident. The primary URL is: {result}")
+                    if verbose:
+                        print(f"Company {company_name}: The Google search is confident. The primary URL is: {result}")
                 else:
-                    print(f"Company {company_name}: The Google search is not confident in the primary URL.")        
+                    if verbose:
+                        print(f"Company {company_name}: The Google search is not confident in the primary URL.")        
                     return None
             else:
                 return None
-            
     except Exception as e:
-        print(f'Company {company_name}: Error has occured when getting urls: {e}')
+        print(f'Company {company_name} has error: {e}')
         return None
 
-    
+        
     
 if __name__ == "__main__":
     filename = 'New Construct'
