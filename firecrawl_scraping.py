@@ -235,37 +235,46 @@ def search_company_website(company_name):
     result = response.json()
     if 'items' in result:
         links = [result['items'][i]['link'] for i in range(5)]
+    else:
+        links = None
     
     return links, result
 
-def get_and_verify_client_link(company_name, verbose = True):
+def get_and_verify_client_link(company_name:str, verbose = True):
     try:
         clearbit_link = clearbit_get_domain(company_name)
         google_links, _ = search_company_website(company_name)
-        google_links = [standardize_url(link) for link in google_links]
-        google_links_clean = [link.replace('/', '') for link in google_links]
-        if clearbit_link and clearbit_link.replace('/', '') in google_links_clean:
-            if verbose:
-                print(f"Company {company_name}: The primary URL is: {clearbit_link}")
-            return clearbit_link
+        if google_links:
+            google_links = [standardize_url(link) for link in google_links]
+            google_links_clean = [link.replace('/', '') for link in google_links]
+            if clearbit_link and clearbit_link.replace('/', '') in google_links_clean:
+                if verbose:
+                    print(f"Company {company_name}: The primary URL is: {clearbit_link}")
+                return clearbit_link
+            else:
+                if verbose:
+                    print(f'Company {company_name}: The URL cannot be verified.\n- clearbit output: {clearbit_link}\n- Google output: {google_links}')
+                
+                if len(google_links) == 5:
+                    if verbose:
+                        print(f'Company {company_name}: Try evaluate the confidance of Google result')
+                
+                    result = evaluate_confidence(google_links)
+                    if result:
+                        if verbose:
+                            print(f"Company {company_name}: The Google search is confident. The primary URL is: {result}")
+                        return result
+                    else:
+                        if verbose:
+                            print(f"Company {company_name}: The Google search is not confident in the primary URL.")        
+                        return None
+                else:
+                    return None
         else:
             if verbose:
-                print(f'Company {company_name}: The URL cannot be verified.\n- clearbit output: {clearbit_link}\n- Google output: {google_links}')
+                print(f"Company {company_name}: The Google search could not find anything.")        
+            return None
             
-            if len(google_links) == 5:
-                if verbose:
-                    print(f'Company {company_name}: Try evaluate the confidance of Google result')
-            
-                result = evaluate_confidence(google_links)
-                if result:
-                    if verbose:
-                        print(f"Company {company_name}: The Google search is confident. The primary URL is: {result}")
-                else:
-                    if verbose:
-                        print(f"Company {company_name}: The Google search is not confident in the primary URL.")        
-                    return None
-            else:
-                return None
     except Exception as e:
         print(f'Company {company_name} has error: {e}')
         return None
