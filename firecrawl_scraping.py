@@ -199,7 +199,7 @@ def evaluate_confidence(urls):
     url_counts = Counter(base_urls)
     most_common_url, count = url_counts.most_common(1)[0]
     
-    if count > len(urls) / 2:
+    if count >= len(urls) / 2:
         return most_common_url
     else:
         return None
