@@ -595,7 +595,7 @@ def update_client_list(processed_name:str, extraction_file_path:str, client_file
         
 if __name__ == "__main__":
     client = True
-    processed_name = 'beeline'
+    processed_name = 'docmagic'
     
     if not client:
         scrape_file_path = f'scraping_output_v2_raw/{processed_name}.json'
@@ -612,11 +612,11 @@ if __name__ == "__main__":
                                 include_additional_context = True, 
                                 overwrite = False)
 
-        _ = add_client_url_to_extraction_output(processed_name = processed_name,
-                                            extraction_file_path = extraction_file_path)
-
         _ = get_product_embedding(processed_name = processed_name,
                             extraction_file_path = extraction_file_path)
+        
+        _ = add_client_url_to_extraction_output(processed_name = processed_name,
+                                    extraction_file_path = extraction_file_path)
 
         _ = update_client_list(processed_name = processed_name,
                         extraction_file_path = extraction_file_path,
@@ -636,9 +636,10 @@ if __name__ == "__main__":
                                 extraction_file_path = extraction_file_path, 
                                 include_additional_context = False, 
                                 overwrite = False)
+        
+        _ = get_product_embedding(processed_name = processed_name,
+                    extraction_file_path = extraction_file_path)
 
         _ = add_client_url_to_extraction_output(processed_name = processed_name,
                                             extraction_file_path = extraction_file_path)
 
-        _ = get_product_embedding(processed_name = processed_name,
-                            extraction_file_path = extraction_file_path)
