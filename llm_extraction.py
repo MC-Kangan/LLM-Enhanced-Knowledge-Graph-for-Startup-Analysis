@@ -160,7 +160,6 @@ def create_empty_json_file(output_path):
         json.dump(empty_data, json_file, indent=4)
     print(f"Empty JSON file created at {output_path}")
 
-
 def llm_summary(text, model_name="gpt-4o"):
     system_message = """
     You are an intelligent text extraction and conversion assistant. Your task is to extract information 
@@ -181,6 +180,7 @@ def llm_summary(text, model_name="gpt-4o"):
     2. **About Partner or Client**:
     - Any information about the company's partners or clients.
     - Any use cases (case studies) describing how a client is using the company's product or service.
+    - Any quotes or reviews by the clients.
     
     ## Note:
     Sometimes, the company does not explicit describe their clients and the client use case, instead, they will only display clients' logos. 
@@ -276,6 +276,7 @@ def llm_summary_execution(processed_name:str,
     if file_modified:
         extracted_data['processed_company'] = processed_name
         extracted_data['url'] = scrape_data['url']
+        extracted_data['model_name'] = model_name
         write_json_file(summary_file_path, extracted_data)
         
     return extracted_data

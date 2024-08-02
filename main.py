@@ -5,11 +5,9 @@ from firecrawl_scraping import *
 from utility import *
 
 
-
-
 if __name__ == "__main__":
-    client = True
-    processed_name = 'beeline'
+    client = False
+    processed_name = 'jll'
     
     if not client:
         scrape_file_path = f'scraping_output_v2_raw/{processed_name}.json'
