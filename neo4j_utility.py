@@ -10,8 +10,11 @@ from neo4j import GraphDatabase
 from dotenv import load_dotenv
 from neomodel import config, StructuredNode, StringProperty, FloatProperty, BooleanProperty, ArrayProperty, RelationshipTo
 
+from neo4j import GraphDatabase, basic_auth
+
 # Configure the database connection
-config.DATABASE_URL = f"bolt://neo4j:{os.getenv('NEO4J_PASSWORD')}@localhost:7687"
+# config.DATABASE_URL = f"bolt://neo4j:{os.getenv('NEO4J_PASSWORD')}@localhost:7687"
+
 
 
 class Company(StructuredNode):
@@ -150,4 +153,15 @@ def kg_construction(processed_name:str, extraction_file_path:str ):
 
 
 if __name__ == "__main__":
-    pass
+    URI = os.getenv("NEO4J_URI")
+    AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
+
+    with GraphDatabase.driver(URI, auth=AUTH) as driver:
+        driver.verify_connectivity()
+        
+        print("Connection established.")
+        config.DRIVER = driver
+        
+    processed_name = 'jll'
+    extraction_file_path = f'client_extraction_output/{processed_name}_extraction.json'
+    kg_construction(processed_name, extraction_file_path)

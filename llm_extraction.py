@@ -441,6 +441,7 @@ def llm_extraction_execution(processed_name:str,
                              summary_file_path:str,
                              extraction_file_path:str, 
                              include_additional_context:bool = True, 
+                             model_name:str = 'gpt-4o', 
                              overwrite:bool = False):
     
     if not overwrite and os.path.exists(extraction_file_path):
@@ -464,12 +465,14 @@ def llm_extraction_execution(processed_name:str,
                 print(f'Company: {processed_name}; Pitchbook description obtained: {context}')
                 
                 initial_response = initial_extraction(text = combined_summary, 
-                                                additional_context = context).dict()
+                                                additional_context = context,
+                                                model_name = model_name).dict()
                 
             else:
                 print(f'Company: {processed_name}; Estimated Cost: ${calculate_cost(combined_summary)}')
                 initial_response = initial_extraction(text = combined_summary, 
-                                            additional_context = None).dict()
+                                            additional_context = None,
+                                            model_name = model_name).dict()
             
             print(f'Company: {processed_name}; PART 1 - Initial extraction is completed.')
             
@@ -480,7 +483,7 @@ def llm_extraction_execution(processed_name:str,
                 clients = initial_response['client_descriptions'] if initial_response['client_descriptions'] else []
                 summary = initial_response['summary_product_description']
 
-                validated_response = information_validation(products, clients, summary)
+                validated_response = information_validation(products, clients, summary, model_name)
                 print(f'Company: {processed_name}; PART 2 - Information validation is completed.')
                 result['validated_client_descriptions'] = validated_response.dict()['client_descriptions']
                 
@@ -562,7 +565,7 @@ def get_product_embedding(processed_name:str, extraction_file_path:str, embeddin
     
     return data
 
-def update_client_list(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
+def update_client_list_outdated(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
     
     data = read_json_file(extraction_file_path)
     client_info = read_json_file(client_file_path)
@@ -599,7 +602,7 @@ def update_client_list(processed_name:str, extraction_file_path:str, client_file
         print(f'Company: {processed_name}; No clients to be updated')
 
 
-def update_client_list_v2(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
+def update_client_list(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
     
     data = read_json_file(extraction_file_path)
     client_info = read_json_file(client_file_path)
