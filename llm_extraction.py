@@ -492,6 +492,13 @@ def llm_extraction_execution(processed_name:str,
             result['timestamp'] = current_dateTime.strftime(format = "%Y-%m-%d %H:%M") + ' Etc/GMT'
             result['processed_company'] = processed_name
             result['url'] = read_json_file(summary_file_path)['url']
+            
+            if get_additional_info(processed_name, 'companies'):
+                result['name'] = get_additional_info(processed_name, 'companies')
+            elif get_additional_client_info(processed_name, 'name'):
+                result['name'] = get_additional_client_info(processed_name, 'name')
+            else:
+                result['name'] = None
 
             write_json_file(extraction_file_path, result)
             
@@ -590,7 +597,49 @@ def update_client_list(processed_name:str, extraction_file_path:str, client_file
             print(f'Company: {processed_name}; Error occurred: {e}')
     else:
         print(f'Company: {processed_name}; No clients to be updated')
+
+
+def update_client_list_v2(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
+    
+    data = read_json_file(extraction_file_path)
+    client_info = read_json_file(client_file_path)
         
+    if data['validated_client_descriptions']:
+        try:        
+            for client in data['validated_client_descriptions']:
+                if client['entity_type'] != 'company':
+                    continue
+                
+                if client['url']:
+                    # If a company's name already exists in the dictionary and the url is unchanged
+                    if client['url'] in client_info:
+                        # If its service provider does not appear in the saved list, then append it
+                        if processed_name not in client_info[client['url']]['service_provider_processed']:
+                            client_info[client['url']]['service_provider_processed'].append(processed_name)
+                            client_info[client['url']]['service_provider'].append(get_additional_info(processed_name, 'companies'))
+                            client_info[client['url']]['service_provider_url'].append('https://' + get_additional_info(processed_name, 'processed_url'))
+                        else:
+                            if verbose:
+                                print(f'Client {client["name"]} has already been recorded.')
+                    
+                    # If a company's name already does not exist, add the new company
+                    else:
+                        client_info[client['url']] = {
+                                            'name': client['name'],
+                                            'processed_name': process_company_name(client['name']),
+                                            'service_provider_processed': [processed_name],
+                                            'service_provider': [get_additional_info(processed_name, 'companies')],
+                                            'service_provider_url': ['https://' + get_additional_info(processed_name, 'processed_url')]
+                                            }
+                else:
+                    print(f'Client {client["name"]}: URL could not be found')
+        
+            print(f"Company: {data['processed_company']}; Clients information is updated.")
+            write_json_file(client_file_path, client_info)
+        except Exception as e:
+            print(f'Company: {processed_name}; Error occurred: {e}')
+    else:
+        print(f'Company: {processed_name}; No clients to be updated')
         
         
         

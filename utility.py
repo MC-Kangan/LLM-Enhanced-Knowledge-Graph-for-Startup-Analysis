@@ -41,3 +41,18 @@ def get_additional_info(processed_name:str, column_name:str, verbose:bool = Fals
         if verbose:
             print(f'Error has occured when searching {processed_name}: {e}')
         return None
+    
+def get_additional_client_info(processed_name:str, feature_name:str, verbose:bool = False):
+    try:
+        data = read_json_file('data/client_info.json')
+        
+        for url, details in data.items():
+            if details['processed_name'] == processed_name:
+                return details[feature_name]
+        return None
+    except Exception as e:
+        if verbose:
+            print(f'Error has occured when searching {processed_name}: {e}')
+        return None
+
+    

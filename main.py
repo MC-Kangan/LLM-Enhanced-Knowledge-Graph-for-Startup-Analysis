@@ -6,7 +6,7 @@ from utility import *
 
 
 if __name__ == "__main__":
-    client = False
+    client = True
     processed_name = 'jll'
     
     if not client:

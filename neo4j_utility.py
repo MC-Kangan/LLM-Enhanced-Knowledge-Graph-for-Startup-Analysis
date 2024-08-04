@@ -21,13 +21,21 @@ class Company(StructuredNode):
     year_founded = StringProperty(default=None)
     valuation = FloatProperty(default=None)
     last_known_valuation_date = StringProperty(default=None)
+    last_known_valuation_deal_type = StringProperty(default=None)
     description = StringProperty(default=None)
+    primary_industry_sector = StringProperty(default=None)
+    primary_industry_group = StringProperty(default=None)
+    verticals = StringProperty(default=None)
+    total_raised = FloatProperty(default=None)
+    hq_location = StringProperty(default=None)
+    hq_country_territory_region = StringProperty(default=None)
+    hq_city = StringProperty(default=None)
 
     provides = RelationshipTo("Product", "PROVIDES")
 
 class Product(StructuredNode):
     name = StringProperty(unique_index=True)
-    description = StringProperty(default=None)
+    description = StringProperty(defult=None)
     name_embedding = ArrayProperty(default=None)
     description_embedding = ArrayProperty(default=None)
     summary_product = BooleanProperty(default=False)
@@ -39,12 +47,20 @@ def create_company_nodes(processed_name:str, extraction_file_path:str):
     company_data = read_json_file(extraction_file_path)
     company = Company.get_or_create({
         'url': company_data['url'],  # URL used as the unique index
-        'name': get_additional_info(processed_name, 'companies'),
+        'name': company_data['name'],
         'processed_name': processed_name,
         'year_founded': get_additional_info(processed_name, 'year_founded'),
         'valuation': get_additional_info(processed_name, 'last_known_valuation'),
         'last_known_valuation_date': get_additional_info(processed_name, 'last_known_valuation_date'),
-        'description': get_additional_info(processed_name, 'description')
+        'last_known_valuation_deal_type': get_additional_info(processed_name, 'last_known_valuation_deal_type'),
+        'description': get_additional_info(processed_name, 'description'),
+        'primary_industry_sector' : get_additional_info(processed_name, 'primary_industry_sector'),
+        'primary_industry_group' : get_additional_info(processed_name, 'primary_industry_group'),
+        'verticals' : get_additional_info(processed_name, 'verticals'),
+        'total_raised' : get_additional_info(processed_name, 'total_raised'),
+        'hq_location' : get_additional_info(processed_name, 'hq_location'),
+        'hq_country_territory_region': get_additional_info(processed_name, 'hq_country_territory_region'),
+        'hq_city' : get_additional_info(processed_name, 'hq_city')
     })[0]
     return company
 
