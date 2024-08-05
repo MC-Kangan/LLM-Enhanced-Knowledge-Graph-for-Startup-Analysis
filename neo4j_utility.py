@@ -10,12 +10,22 @@ from neo4j import GraphDatabase
 from dotenv import load_dotenv
 from neomodel import config, StructuredNode, StringProperty, FloatProperty, BooleanProperty, ArrayProperty, RelationshipTo
 
-from neo4j import GraphDatabase, basic_auth
+# URI = os.getenv("NEO4J_URI")
+# AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
 
-# Configure the database connection
-# config.DATABASE_URL = f"bolt://neo4j:{os.getenv('NEO4J_PASSWORD')}@localhost:7687"
+# with GraphDatabase.driver(URI, auth=AUTH) as driver:
+#     driver.verify_connectivity()
+#     print("Connection established.")
+#     config.DRIVER = driver
+#     # config.DATABASE_URL = "neo4j+s://c3ec5c3b.databases.neo4j.io"
+    
+config.DATABASE_URL = f"bolt://neo4j:{os.getenv('NEO4J_PASSWORD')}@localhost:7687"
 
-
+def build_connection():
+    URI = os.getenv("NEO4J_URI")
+    AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
+    my_driver = GraphDatabase().driver(URI, auth=AUTH)
+    config.DRIVER = my_driver
 
 class Company(StructuredNode):
     name = StringProperty()  # Removed unique_index
@@ -47,6 +57,7 @@ class Product(StructuredNode):
 
 
 def create_company_nodes(processed_name:str, extraction_file_path:str):
+
     company_data = read_json_file(extraction_file_path)
     company = Company.get_or_create({
         'url': company_data['url'],  # URL used as the unique index
@@ -112,14 +123,18 @@ def create_product_nodes(json_data):
     return products
 
 def link_product_to_company(company, product):
+
     if not company.provides.is_connected(product):
         company.provides.connect(product)
 
 def link_product_to_client(product, client_company):
+
     if not product.serves.is_connected(client_company):
         product.serves.connect(client_company)
 
-def kg_construction(processed_name:str, extraction_file_path:str ):
+## TODO: NEED TO FIND WAYS TO PREVENT THE COMPANY'S INFO GET OVERWRITTEN WHEN A STARTUP BECOMES A CLIENT
+def kg_construction(processed_name:str, extraction_file_path:str):
+
     company = create_company_nodes(processed_name, extraction_file_path)
     json_data = read_json_file(extraction_file_path)
     if json_data:
@@ -134,11 +149,32 @@ def kg_construction(processed_name:str, extraction_file_path:str ):
                         'url': client['url'],  # Use URL as the unique index
                         'name': client['name'],
                         'processed_name': process_company_name(client['name']),
-                        'year_founded': None,
-                        'valuation': None,
-                        'last_known_valuation_date': None,
-                        'description': None
+                        'year_founded': get_additional_info(processed_name, 'year_founded'),
+                        'valuation': get_additional_info(processed_name, 'last_known_valuation'),
+                        'last_known_valuation_date': get_additional_info(processed_name, 'last_known_valuation_date'),
+                        'last_known_valuation_deal_type': get_additional_info(processed_name, 'last_known_valuation_deal_type'),
+                        'description': get_additional_info(processed_name, 'description'),
+                        'primary_industry_sector' : get_additional_info(processed_name, 'primary_industry_sector'),
+                        'primary_industry_group' : get_additional_info(processed_name, 'primary_industry_group'),
+                        'verticals' : get_additional_info(processed_name, 'verticals'),
+                        'total_raised' : get_additional_info(processed_name, 'total_raised'),
+                        'hq_location' : get_additional_info(processed_name, 'hq_location'),
+                        'hq_country_territory_region': get_additional_info(processed_name, 'hq_country_territory_region'),
+                        'hq_city' : get_additional_info(processed_name, 'hq_city')
                     })[0]
+                    
+                        # 'year_founded': None,
+                        # 'valuation': None,
+                        # 'last_known_valuation_date': None,
+                        # 'last_known_valuation_deal_type': None,
+                        # 'description': None,
+                        # 'primary_industry_sector': None,
+                        # 'primary_industry_group' : None,
+                        # 'verticals': None,
+                        # 'total_raised': None,
+                        # 'hq_location': None,
+                        # 'hq_country_territory_region': None,
+                        # 'hq_city': None
                     
                     product_name = client['product_used'] if client['product_used'] else json_data['summary_product_description']['name']
                     product_node = Product.get_or_create({
@@ -155,6 +191,9 @@ def kg_construction(processed_name:str, extraction_file_path:str ):
 if __name__ == "__main__":
     URI = os.getenv("NEO4J_URI")
     AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
+
+    # Configure the database connection
+    
 
     with GraphDatabase.driver(URI, auth=AUTH) as driver:
         driver.verify_connectivity()
