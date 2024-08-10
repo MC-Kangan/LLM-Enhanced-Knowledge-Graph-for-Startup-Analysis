@@ -147,7 +147,6 @@ def link_product_to_client(product, client_company):
     if not product.serves.is_connected(client_company):
         product.serves.connect(client_company)
 
-## TODO: NEED TO FIND WAYS TO PREVENT THE COMPANY'S INFO GET OVERWRITTEN WHEN A STARTUP BECOMES A CLIENT
 
 def kg_construction(processed_name: str, extraction_file_path: str):
     company = create_company_nodes(processed_name, extraction_file_path)

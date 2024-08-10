@@ -543,25 +543,38 @@ def get_embedding(text:str, embedding_model:str="text-embedding-3-small"):
 def get_product_embedding(processed_name:str, extraction_file_path:str, embedding_model:str="text-embedding-3-small"):
     
     data = read_json_file(extraction_file_path)
+    
+    modified = False
     # Check wheather embedding has already been done
     if 'name_embedding' in data['summary_product_description']:
         print(f'Company: {processed_name}; Embedding has already been done.')
         pass
     else:
         product_lst = data['product_descriptions']
-        for product in product_lst:
-            product['description_embedding'] = get_embedding(text = product['description'],
-                                                                embedding_model = embedding_model)
-            product['name_embedding'] = get_embedding(text = product['name'],
-                                                                embedding_model = embedding_model)
+        if product_lst:
+            for product in product_lst:
+                product['description_embedding'] = get_embedding(text = product['description'],
+                                                                    embedding_model = embedding_model)
+                product['name_embedding'] = get_embedding(text = product['name'],
+                                                                    embedding_model = embedding_model)
+            print(f'Company: {processed_name}; Product embedding is completed.')
+            modified = True
+        else:
+            print(f'Company: {processed_name}; Product description can not be found.')
 
         summary_product = data['summary_product_description']
-        summary_product['description_embedding'] = get_embedding(text = summary_product['description'],
-                                                                embedding_model = embedding_model)
-        summary_product['name_embedding'] = get_embedding(text = summary_product['name'],
-                                                                embedding_model = embedding_model)
-        print(f'Company: {processed_name}; Embedding is completed.')
-        write_json_file(extraction_file_path, data)
+        if summary_product:
+            summary_product['description_embedding'] = get_embedding(text = summary_product['description'],
+                                                                    embedding_model = embedding_model)
+            summary_product['name_embedding'] = get_embedding(text = summary_product['name'],
+                                                                    embedding_model = embedding_model)
+            print(f'Company: {processed_name}; Summary product embedding is completed.')
+            modified = True
+        else:
+            print(f'Company: {processed_name}; Summary product description can not be found.')
+            
+        if modified:
+            write_json_file(extraction_file_path, data)
     
     return data
 
