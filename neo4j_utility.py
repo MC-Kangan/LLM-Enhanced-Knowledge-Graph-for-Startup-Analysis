@@ -47,7 +47,9 @@ class Company(StructuredNode):
     provides = RelationshipTo("Product", "PROVIDES")
 
 class Product(StructuredNode):
-    name = StringProperty(unique_index=True)
+    name = StringProperty()
+    company_url = StringProperty()
+    product_key = StringProperty(unique_index=True)
     description = StringProperty(defult=None)
     name_embedding = ArrayProperty(default=None)
     description_embedding = ArrayProperty(default=None)
@@ -115,6 +117,7 @@ def create_product_nodes(json_data):
         summary_product_description = json_data['summary_product_description']['description']
         summary_product_name_embedding = json_data['summary_product_description']['name_embedding']
         summary_product_description_embedding = json_data['summary_product_description']['description_embedding']
+        company_url = json_data['url']
         
         for product in product_list:
             if product['name'].lower() != summary_product_name.lower():
@@ -127,8 +130,12 @@ def create_product_nodes(json_data):
                 product_description = summary_product_description
                 name_embedding = summary_product_name_embedding
                 description_embedding = summary_product_description_embedding
+                
+            product_key = f"{product['name']} {json_data['name']}"
             product_node = Product.get_or_create({
                 'name': product['name'],
+                'company_url': company_url,
+                'product_key': product_key,
                 'description': product_description,
                 'summary_product': summary_product,
                 'name_embedding': name_embedding,
@@ -168,9 +175,13 @@ def kg_construction(processed_name: str, extraction_file_path: str):
                     client_company = get_or_create_company(client['url'], client_info)
 
                     product_name = client['product_used'] if client['product_used'] else json_data['summary_product_description']['name']
+                    
+                    product_key = f"{product_name} {json_data['name']}"
                     # This step only get the product that is previously loaded
                     product_node = Product.get_or_create({
-                        'name': product_name
+                        'name': product_name,
+                        'product_key': product_key,
+                        'company_url': json_data['url'] 
                     })[0]
                     
                     link_product_to_company(company, product_node)

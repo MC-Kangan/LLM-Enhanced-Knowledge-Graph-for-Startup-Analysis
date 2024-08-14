@@ -28,7 +28,7 @@ def process_company_name(name):
 def get_additional_info(processed_name:str, column_name:str, verbose:bool = False):
     
     try: 
-        df_all = pd.read_csv('data/PitchBook_All_Columns_2024_07_04_14_48_36_accessibility.csv')
+        df_all = pd.read_csv('data/merge_url_companies.csv')
         df_all['companies'] = df_all['companies'].str.replace(r'\s*\(.*?\)\s*', '', regex=True)
         df_all['processed_name'] = df_all['companies'].apply(process_company_name)
         
