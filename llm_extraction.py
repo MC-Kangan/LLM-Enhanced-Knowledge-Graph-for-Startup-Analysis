@@ -240,7 +240,7 @@ def llm_summary(text, model_name="gpt-4o"):
     
     return response
 
-
+@log_function_time
 def llm_summary_execution(processed_name:str, 
                           scrape_file_path:str,
                           summary_file_path:str,
@@ -248,7 +248,7 @@ def llm_summary_execution(processed_name:str,
                           model_name:str = 'gpt-4o-mini'):
 
     scrape_data = read_json_file(scrape_file_path)
-    
+    ensure_parent_directory_exists(summary_file_path)
     file_modified = False
 
     # Load existing data if the file exists
@@ -437,12 +437,15 @@ def information_validation(products: list, clients: list, summary: dict, model_n
     )
     return response
 
+@log_function_time
 def llm_extraction_execution(processed_name:str, 
                              summary_file_path:str,
                              extraction_file_path:str, 
                              include_additional_context:bool = True, 
                              model_name:str = 'gpt-4o', 
                              overwrite:bool = False):
+    
+    ensure_parent_directory_exists(extraction_file_path)
     
     if not overwrite and os.path.exists(extraction_file_path):
         print(f"Company: {processed_name}; Skipping extraction as the extraction file already exists and overwrite is set to False.")
@@ -510,6 +513,7 @@ def llm_extraction_execution(processed_name:str,
             print(f'Summary file: {summary_file_path} does not exist.')
             return None
 
+@log_function_time
 def add_client_url_to_extraction_output(processed_name:str, extraction_file_path:str, verbose:bool = False, overwrite:bool = False):
     data = read_json_file(extraction_file_path)
     
@@ -539,7 +543,7 @@ def get_embedding(text:str, embedding_model:str="text-embedding-3-small"):
    text = text.replace("\n", " ")
    return client_openai.embeddings.create(input = [text], model=embedding_model).data[0].embedding
 
-
+@log_function_time
 def get_product_embedding(processed_name:str, extraction_file_path:str, embedding_model:str="text-embedding-3-small"):
     
     data = read_json_file(extraction_file_path)
@@ -581,6 +585,7 @@ def get_product_embedding(processed_name:str, extraction_file_path:str, embeddin
 def update_client_list_outdated(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
     
     data = read_json_file(extraction_file_path)
+    
     client_info = read_json_file(client_file_path)
         
     if data['validated_client_descriptions']:
@@ -614,11 +619,16 @@ def update_client_list_outdated(processed_name:str, extraction_file_path:str, cl
     else:
         print(f'Company: {processed_name}; No clients to be updated')
 
-
+@log_function_time
 def update_client_list(processed_name:str, extraction_file_path:str, client_file_path:str = 'data/client_info.json', verbose:bool = False):
     
     data = read_json_file(extraction_file_path)
-    client_info = read_json_file(client_file_path)
+    
+    ensure_parent_directory_exists(client_file_path)
+    if not os.path.exists(client_file_path):
+        client_info = {}
+    else:
+        client_info = read_json_file(client_file_path)
         
     if data['validated_client_descriptions']:
         try:        
@@ -656,8 +666,35 @@ def update_client_list(processed_name:str, extraction_file_path:str, client_file
             print(f'Company: {processed_name}; Error occurred: {e}')
     else:
         print(f'Company: {processed_name}; No clients to be updated')
+
+@log_function_time    
+def troubleshoot_llm_output(processed_name:str, extraction_file_path:str):
+    
+    try:
+        data = read_json_file(extraction_file_path)
+        clients = data['validated_client_descriptions']
+        modified = False
+        product_list = [product['name'] for product in data['product_descriptions']] + [data['summary_product_description']['name']]
         
-        
+        if clients:
+            for client in clients:
+                # Troubleshoot 1: If the client's URL == company's URL
+                if client['url']:
+                    if client['url'] == data["url"]:
+                        print(f'Issue found: Client URL == Company URL: Company {processed_name}; Client {client["name"]}; {client["url"]}')
+                        client['url'] = None
+                        modified = True
+                        
+                # Troubleshoot 2: If product_used is not in the product list previously extracted
+                if client['product_used'] not in product_list:
+                    print(f'Issue found: Company {processed_name}; Client {client["name"]}; Product used {client["product_used"]}')
+                    client['product_used'] = data['summary_product_description']['name']
+                    modified = True
+                    
+        if modified:
+            write_json_file(extraction_file_path, data)
+    except Exception as e:
+        print(f'Error found at {processed_name}: {e}')     
         
 if __name__ == "__main__":
     client = True

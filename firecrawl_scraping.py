@@ -18,7 +18,6 @@ from utility import *
 
 def is_webpage_accessible(url):
     # url = 'https://' + url
-    print(url)
     
     try:
         headers = {
@@ -55,9 +54,12 @@ def scrape_data(url):
         raise KeyError("The key 'markdown' does not exist in the scraped data.")
     
 
-
+@log_function_time
 def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False):
     load_dotenv()
+    
+    ensure_parent_directory_exists(file_path)
+    
     # Initialize the FirecrawlApp with your API key
     app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_KEY'))
     
@@ -68,7 +70,7 @@ def crawl_data(base_url, url_list: list, file_path: str, overwrite: bool = False
     else:
         result = {}
         
-    processed_name = file_path.split('/')[1].replace('.json', '')
+    processed_name = file_path.split('/')[-1].replace('.json', '')
     result['processed_company'] = processed_name
     result['url'] = base_url
 
@@ -170,7 +172,7 @@ def filter_urls(urls):
     filtered_urls = [url for url in filtered_urls if not any(keyword in url.lower() for keyword in keywords_unwanted)]
     return filtered_urls
 
-
+@log_function_time
 def get_related_urls(base_url):
     if is_webpage_accessible(base_url):
         html = fetch_webpage(base_url)
