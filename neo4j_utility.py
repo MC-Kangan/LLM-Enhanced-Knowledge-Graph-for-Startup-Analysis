@@ -43,7 +43,7 @@ class Company(StructuredNode):
     hq_location = StringProperty(default=None)
     hq_country_territory_region = StringProperty(default=None)
     hq_city = StringProperty(default=None)
-    cluster_name = StringProperty(default=None)
+    # cluster_name = StringProperty(default=None)
     cluster_name_detail = StringProperty(default=None)
 
     provides = RelationshipTo("Product", "PROVIDES")
