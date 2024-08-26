@@ -10,14 +10,6 @@ from neo4j import GraphDatabase
 from dotenv import load_dotenv
 from neomodel import config, StructuredNode, StringProperty, FloatProperty, BooleanProperty, ArrayProperty, RelationshipTo
 
-# URI = os.getenv("NEO4J_URI")
-# AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
-
-# with GraphDatabase.driver(URI, auth=AUTH) as driver:
-#     driver.verify_connectivity()
-#     print("Connection established.")
-#     config.DRIVER = driver
-#     # config.DATABASE_URL = "neo4j+s://c3ec5c3b.databases.neo4j.io"
     
 config.DATABASE_URL = f"bolt://neo4j:{os.getenv('NEO4J_PASSWORD')}@localhost:7687"
 
@@ -43,7 +35,6 @@ class Company(StructuredNode):
     hq_location = StringProperty(default=None)
     hq_country_territory_region = StringProperty(default=None)
     hq_city = StringProperty(default=None)
-    # cluster_name = StringProperty(default=None)
     cluster_name_detail = StringProperty(default=None)
 
     provides = RelationshipTo("Product", "PROVIDES")
@@ -190,6 +181,7 @@ def kg_construction(processed_name: str, extraction_file_path: str):
                     link_product_to_client(product_node, client_company)
                     
     print(f'Company {processed_name} is added to the graph.')
+    
 
 if __name__ == "__main__":
     URI = os.getenv("NEO4J_URI")
@@ -197,7 +189,6 @@ if __name__ == "__main__":
 
     # Configure the database connection
     
-
     with GraphDatabase.driver(URI, auth=AUTH) as driver:
         driver.verify_connectivity()
         
