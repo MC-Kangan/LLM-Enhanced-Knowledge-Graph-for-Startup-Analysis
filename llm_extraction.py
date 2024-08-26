@@ -281,7 +281,7 @@ def llm_summary_execution(processed_name:str,
         
     return extracted_data
 
-def initial_extraction(text: str, model_name: str = 'gpt-4o', additional_context: str = None) -> ExtractedInformation:
+def semantic_data_extraction(text: str, model_name: str = 'gpt-4o', additional_context: str = None) -> ExtractedInformation:
     
     # Patch the OpenAI client with Instructor
     client = instructor.from_openai(OpenAI(api_key=os.getenv('OPENAI_KEY')))
@@ -467,13 +467,13 @@ def llm_extraction_execution(processed_name:str,
                 print(f'Company: {processed_name}; Estimated Cost: ${calculate_cost(combined_summary + context)}')
                 print(f'Company: {processed_name}; Pitchbook description obtained: {context}')
                 
-                initial_response = initial_extraction(text = combined_summary, 
+                initial_response = semantic_data_extraction(text = combined_summary, 
                                                 additional_context = context,
                                                 model_name = model_name).dict()
                 
             else:
                 print(f'Company: {processed_name}; Estimated Cost: ${calculate_cost(combined_summary)}')
-                initial_response = initial_extraction(text = combined_summary, 
+                initial_response = semantic_data_extraction(text = combined_summary, 
                                             additional_context = None,
                                             model_name = model_name).dict()
             
@@ -528,7 +528,7 @@ def add_client_url_to_extraction_output(processed_name:str, extraction_file_path
                 if client['entity_type'] != 'company':
                     client['url'] = None
                 else:
-                    url = get_and_verify_client_link(client['name'], verbose = verbose)
+                    url = get_and_verify_company_link(client['name'], verbose = verbose)
                     client['url'] = url
             print(f"Company: {processed_name}; Client is extracted.")
     else:

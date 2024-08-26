@@ -242,7 +242,7 @@ def search_company_website(company_name):
     
     return links, result
 
-def get_and_verify_client_link(company_name:str, verbose = True):
+def get_and_verify_company_link(company_name:str, verbose = True):
     try:
         clearbit_link = clearbit_get_domain(company_name)
         google_links, _ = search_company_website(company_name)
