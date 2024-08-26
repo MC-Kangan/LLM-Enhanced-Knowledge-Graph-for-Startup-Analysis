@@ -1,7 +1,0 @@
-*.pyc
-*.pyo
-__pycache__/
-ucl_project/
-extraction_output/
-scraping_output/
-.DS_Store
