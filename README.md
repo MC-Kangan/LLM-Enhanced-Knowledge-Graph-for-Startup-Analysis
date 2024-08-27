@@ -8,7 +8,7 @@ Utilising the `Firecrawl` web scraping tool powered by large language models (LL
 ## Architecture
 Below is the architecture diagram demonstrating the design of the prompting chain used in this project:
 
-![Architecture Diagram](img:imgs/architecture.png)
+![Architecture Diagram](./imgs/architecture.png)
 
 ## Setup Instructions
 
@@ -33,8 +33,8 @@ Ensure you have Python installed on your machine. Python 3.8 or later is recomme
     SEARCH_ENGINE_ID=your_search_engine_id
 
 ### File Structure
-
-```bash
+The file structure is introduced below:
+```shell
     /LLM-Enhanced-Knowledge-Graph-for-Startup-Analysis
     ├── data/                 # Data directory for storing raw and processed data (not open-sourced)
     ├── working_notebooks/    # Jupyter notebooks for developments and experiments
@@ -51,4 +51,5 @@ Ensure you have Python installed on your machine. Python 3.8 or later is recomme
     ├── requirements.txt      # The file listing all project dependencies
     ├── .env                  # Environment variables file
     └── README.md             # The README file you are currently reading
+
 
