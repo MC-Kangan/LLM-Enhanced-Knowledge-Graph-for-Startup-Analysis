@@ -20,9 +20,9 @@ if __name__ == "__main__":
     random_sample = df.sample(n=20, random_state=42)
 
     # Define directory
-    scrape_file_dir = f'test/scraping_output_v2_raw'
-    summary_file_dir = f'test/extraction_summary_v2'
-    extraction_file_dir = f'test/extraction_output_v2'
+    scrape_file_dir = f'test/{os.getenv("fintech_scraping_folder")}'
+    summary_file_dir = f'test/{os.getenv("fintech_summary_folder")}'
+    extraction_file_dir = f'test/{os.getenv("fintech_extraction_folder")}'
     client_file_dir = f'test/client_info.json'
 
     # Data scraping
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         processed_name = doc.replace('.json', '')
         
         scrape_file_path = f'{scrape_file_dir}/{processed_name}.json'
-        summary_file_path = f'{summary_file_dir}/{processed_name}_summary.json'
+        summary_file_path = f'{summary_file_dir}/{processed_name}_summary_str.json'
         extraction_file_path = f'{extraction_file_dir}/{processed_name}_extraction.json'
         
         _ = llm_summary_execution(processed_name = processed_name,

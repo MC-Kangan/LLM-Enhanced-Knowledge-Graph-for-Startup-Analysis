@@ -184,17 +184,7 @@ def kg_construction(processed_name: str, extraction_file_path: str):
     
 
 if __name__ == "__main__":
-    URI = os.getenv("NEO4J_URI")
-    AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_INSTANCE_PASSWORD"))
-
-    # Configure the database connection
-    
-    with GraphDatabase.driver(URI, auth=AUTH) as driver:
-        driver.verify_connectivity()
-        
-        print("Connection established.")
-        config.DRIVER = driver
         
     processed_name = 'jll'
-    extraction_file_path = f'client_extraction_output/{processed_name}_extraction.json'
+    extraction_file_path = f'{os.getenv("client_extraction_folder")}/{processed_name}_extraction.json'
     kg_construction(processed_name, extraction_file_path)
