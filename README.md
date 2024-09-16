@@ -49,7 +49,7 @@ Ensure you have Python installed on your machine. Python 3.8 or later is recomme
 The file structure is introduced below:
 ```shell
     /LLM-Enhanced-Knowledge-Graph-for-Startup-Analysis
-    ├── data/                      # Data directory for storing raw and processed data (not open-sourced)
+    ├── data/                      # Data directory for storing raw and processed data (not visible on Github)
     ├── working_notebooks/         # Jupyter notebooks for developments and experiments
     ├── evaluation/                # Code and data file for evaluating LLM's performance on a product attribute value extraction task
     ├── fintech_scraping_output/   # Folder for scraping outputs (not visible on Github)
