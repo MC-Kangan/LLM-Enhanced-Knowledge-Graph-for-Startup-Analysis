@@ -32,7 +32,7 @@ Ensure you have Python installed on your machine. Python 3.8 or later is recomme
     GOOGLE_SEARCH_KEY=your_google_search_key
     SEARCH_ENGINE_ID=your_search_engine_id
 
-2. Define the names of the folders that will be used to save data in the .env file. The fintech or client scraping folders save the web scraping outputs; The summary folders save the outputs from the LLM Content Filtering Layer; Most importantly, the extraction folders save the outputs from the LLM Semantic Data Extraction layer and the LLM Client Validation and Product Matching layer, as shown in the arhitecture diagram above:
+2. Define the names of the folders that will be used to save data in the .env file. The fintech or client scraping folders save the web scraping outputs; The summary folders save the outputs from the LLM Content Filtering Layer; Most importantly, the extraction folders save the outputs from the LLM Semantic Data Extraction layer and the LLM Client Validation and Product Matching layer, as shown in the architecture diagram above:
     ```text
     fintech_scraping_folder = "fintech_scraping_output"
     fintech_summary_folder = "fintech_summary_output"
@@ -42,7 +42,7 @@ Ensure you have Python installed on your machine. Python 3.8 or later is recomme
     client_summary_folder = "client_summary_output"
     client_extraction_folder = "client_extraction_output"
 
-3. The knowledge graph construction step requires a NEO4j graph database (DBMS) to be active and accessible. This project creates and uses the graph database locally via the Neo4j Desktop application. See https://neo4j.com/docs/getting-started/get-started-with-neo4j/ for more relevant information.
+3. The knowledge graph construction step requires a Neo4j graph database (DBMS) to be active and accessible. This project creates and uses the graph database locally via the Neo4j Desktop application. See https://neo4j.com/docs/getting-started/get-started-with-neo4j/ for more relevant information.
     
 
 ### File Structure
@@ -52,12 +52,12 @@ The file structure is introduced below:
     ├── data/                      # Data directory for storing raw and processed data (not open-sourced)
     ├── working_notebooks/         # Jupyter notebooks for developments and experiments
     ├── evaluation/                # Code and data file for evaluating LLM's performance on a product attribute value extraction task
-    ├── fintech_scraping_output/   # Folder for scraping output (not visible on Github)
-    ├── fintech_summary_output/    # Folder for summary output (not visible on Github)
-    ├── fintech_extraction_output/ # Folder for extraction output (not visible on Github)
-    ├── client_scraping_output/    # Folder for scraping output (not visible on Github)
-    ├── client_summary_output/     # Folder for summary output (not visible on Github)
-    ├── client_extraction_output/  # Folder for extraction output (not visible on Github)
+    ├── fintech_scraping_output/   # Folder for scraping outputs (not visible on Github)
+    ├── fintech_summary_output/    # Folder for summary outputs (not visible on Github)
+    ├── fintech_extraction_output/ # Folder for extraction outputs (not visible on Github)
+    ├── client_scraping_output/    # Folder for scraping outputs (not visible on Github)
+    ├── client_summary_output/     # Folder for summary outputs (not visible on Github)
+    ├── client_extraction_output/  # Folder for extraction outputs (not visible on Github)
     ├── main.py                    # Code that runs the entire pipeline in a test mode
     ├── neo4j_utility.py           # Code that connects to Neo4j for knowledge graph construction
     ├── llm_extraction.py          # Code that connects to OpenAI for prompting chains and other LLM-related functions
